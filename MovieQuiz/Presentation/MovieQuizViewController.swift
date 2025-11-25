@@ -24,10 +24,17 @@ final class MovieQuizViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
     
-        previewImage.layer.cornerRadius = 20
-        questionLabel.numberOfLines = 0
-        
+        configurePreviewImage()
+        configureLabels()
         startQuiz()
+    }
+    
+    private func configurePreviewImage() {
+        previewImage.layer.cornerRadius = 20
+    }
+    
+    private func configureLabels() {
+        questionLabel.numberOfLines = 0
     }
     
     private func show(quiz step: QuizStepViewModel) {
