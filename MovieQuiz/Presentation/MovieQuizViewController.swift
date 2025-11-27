@@ -58,12 +58,12 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func checkAnswer(answer: Bool) {
-        let currentQuestion = questions[currentQuestionIndex]
+       if  let currentQuestion = questions[safe: currentQuestionIndex] {
         let isCorrect = currentQuestion.correctAnswer == answer
         if isCorrect {
             correctAnswers += 1
         }
-        showAnswerResult(isCorrect: isCorrect)
+        showAnswerResult(isCorrect: isCorrect)}
     }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
