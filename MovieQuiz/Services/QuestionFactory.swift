@@ -1,5 +1,8 @@
-extension QuizQuestion {
-    static let mockData = [
+class QuestionFactory : QuestionFactoryProtocol {
+    
+    weak var delegate: QuestionFactoryDelegate?
+    
+   private let questions = [
         QuizQuestion(
                    image: "The Godfather",
                    text: "Рейтинг этого фильма больше чем 6?",
@@ -41,4 +44,17 @@ extension QuizQuestion {
                    text: "Рейтинг этого фильма больше чем 6?",
                    correctAnswer: false)
     ]
+    
+    init(delegate: QuestionFactoryDelegate? = nil) {
+        self.delegate = delegate
+    }
+    
+    func requestNextQuestion() {
+        guard let index = (0..<questions.count).randomElement() else {
+            return
+        }
+
+        let question = questions[safe: index]
+        delegate?.didReceiveNextQuestion(question: question)
+    }
 }

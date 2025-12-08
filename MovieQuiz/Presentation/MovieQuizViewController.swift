@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     @IBOutlet weak private var previewImage: UIImageView!
     
@@ -8,10 +8,13 @@ final class MovieQuizViewController: UIViewController {
     
     @IBOutlet weak private var questionLabel: UILabel!
     
-    private let questions: [QuizQuestion] = QuizQuestion.mockData
-
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    
+    private let questionsAmount: Int = 10
+    private var questionFactory: QuestionFactoryProtocol?
+    private var currentQuestion: QuizQuestion?
+    private let alertPresenter = AlertPresenter()
     
     @IBAction private func noButtonClicked(_ sender: Any) {
         checkAnswer(answer: false)
@@ -23,10 +26,24 @@ final class MovieQuizViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        questionFactory = QuestionFactory(delegate: self)
     
         configurePreviewImage()
         configureLabels()
         startQuiz()
+    }
+    
+    // MARK: - QuestionFactoryDelegate
+
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else { return }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+               self?.show(quiz: viewModel)
+           }
     }
     
     private func configurePreviewImage() {
@@ -59,7 +76,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func checkAnswer(answer: Bool) {
-       if  let currentQuestion = questions[safe: currentQuestionIndex] {
+       if  let currentQuestion = currentQuestion {
         let isCorrect = currentQuestion.correctAnswer == answer
         if isCorrect {
             correctAnswers += 1
@@ -71,12 +88,12 @@ final class MovieQuizViewController: UIViewController {
         return QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
             question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)"
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)"
       )
     }
     
     private func showNextQuestionOrResults() {
-      if currentQuestionIndex == questions.count - 1 {
+      if currentQuestionIndex == questionsAmount - 1 {
           let viewModel = QuizResultsViewModel(
             title: "Этот раунд окончен",
             text: "Ваш результат: \(correctAnswers)/10",
@@ -85,30 +102,23 @@ final class MovieQuizViewController: UIViewController {
           show(quiz: viewModel)
       } else {
         currentQuestionIndex += 1
-        let nextQuestion = questions[currentQuestionIndex]
-        let viewModel = convert(model: nextQuestion)
-          
-          show(quiz: viewModel)
+        questionFactory?.requestNextQuestion()
       }
     }
     
     private func startQuiz() {
         currentQuestionIndex = 0
         correctAnswers = 0
-        if let firstQuestion = questions.first   {
-            show(quiz: convert(model: firstQuestion))
-        }
+        questionFactory?.requestNextQuestion()
     }
     
     private func show(quiz result: QuizResultsViewModel) {
-        let alert = UIAlertController(title: result.title,
-                                      message: result.text,
-                                      preferredStyle: .alert)
-        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
-            guard let self = self else { return }
-            self.startQuiz()
+        let alertModel = result.toAlertModel { [weak self] in
+            if let controller =  self { controller.startQuiz() }
         }
-        alert.addAction(action)
-        self.present(alert, animated: true, completion: nil)
+        
+        alertPresenter.show(alertModel) { alert in
+            self.present(alert, animated: true, completion: nil)
+        }
     }
 }
