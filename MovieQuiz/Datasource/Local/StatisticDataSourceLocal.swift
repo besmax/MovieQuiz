@@ -13,7 +13,7 @@ protocol StatisticDataSourceLocalProtocol {
     func setValueByKey<T>(val: T?, key: StatisticKey)
 }
 
-class StatisticDataSourceLocal : StatisticDataSourceLocalProtocol {
+final class StatisticDataSourceLocal : StatisticDataSourceLocalProtocol {
     private let storage: UserDefaults = .standard
     
     func getValueByKey<T>(_ key: StatisticKey, defaultValue: T) -> T {

@@ -7,7 +7,7 @@
 
 import UIKit
 
-class StatisticService : StatisticServiceProtocol {
+final class StatisticService : StatisticServiceProtocol {
     private let dataSource: StatisticDataSourceLocalProtocol = StatisticDataSourceLocal()
     
     var gamesCount: Int {
