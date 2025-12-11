@@ -12,7 +12,7 @@ class StatisticService : StatisticServiceProtocol {
     
     var gamesCount: Int {
         get {
-            dataSource.getValueByKey(StatisticKey.gamesCount) as? Int ?? -1
+            dataSource.getValueByKey(StatisticKey.gamesCount, defaultValue: -1)
         }
         set {
             dataSource.setValueByKey(val: newValue, key: StatisticKey.gamesCount)
@@ -21,9 +21,9 @@ class StatisticService : StatisticServiceProtocol {
     
     var bestGame: GameResult  {
         get {
-            let date: Date = dataSource.getValueByKey(StatisticKey.bestGameDate) as? Date ?? Date()
-            let correct: Int = dataSource.getValueByKey(StatisticKey.bestGameCorrect) as? Int ?? -1
-            let total: Int = dataSource.getValueByKey(StatisticKey.bestGameTotal) as? Int ?? -1
+            let date: Date = dataSource.getValueByKey(StatisticKey.bestGameDate, defaultValue: Date())
+            let correct: Int = dataSource.getValueByKey(StatisticKey.bestGameCorrect, defaultValue: -1)
+            let total: Int = dataSource.getValueByKey(StatisticKey.bestGameTotal, defaultValue: -1)
             return GameResult(correct: correct, total: total, date: date)
         }
         set {
@@ -35,18 +35,21 @@ class StatisticService : StatisticServiceProtocol {
     
     var totalAccuracy: Double {
         get {
-            let correct: Int = dataSource.getValueByKey(StatisticKey.totalCorrectAnswers) as? Int ?? -1
-            let total: Int = dataSource.getValueByKey(StatisticKey.totalQuestionsAsked) as? Int ?? -1
+            let correct: Int = dataSource.getValueByKey(StatisticKey.totalCorrectAnswers, defaultValue: -1)
+            let total: Int = dataSource.getValueByKey(StatisticKey.totalQuestionsAsked, defaultValue: -1)
             return Double(correct) / Double(total) * 100.0
         }
     }
     
     func store(correct count: Int, total amount: Int) {
-        let newTotalCorrectAnswers = (dataSource.getValueByKey(StatisticKey.totalCorrectAnswers) as? Int ?? 0) + count
-        let newTotalQuestionsAsked = (dataSource.getValueByKey(StatisticKey.totalQuestionsAsked) as? Int ?? 0) + amount
+        let newTotalCorrectAnswers = dataSource.getValueByKey(StatisticKey.totalCorrectAnswers, defaultValue: 0) + count
+        let newTotalQuestionsAsked = dataSource.getValueByKey(StatisticKey.totalQuestionsAsked, defaultValue: 0) + amount
 
         dataSource.setValueByKey(val: newTotalCorrectAnswers, key: StatisticKey.totalCorrectAnswers)
         dataSource.setValueByKey(val: newTotalQuestionsAsked, key: StatisticKey.totalQuestionsAsked)
+        
+        let newGamesCount = gamesCount + 1
+        gamesCount = newGamesCount
         
         let current = GameResult(correct: count, total: amount, date: Date())
         if (current.isBetterThan(bestGame)) { bestGame = current }

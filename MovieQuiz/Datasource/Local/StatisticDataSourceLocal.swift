@@ -8,19 +8,19 @@
 import UIKit
 
 protocol StatisticDataSourceLocalProtocol {
-    func getValueByKey(_ key: StatisticKey) -> Any?
+    func getValueByKey<T>(_ key: StatisticKey, defaultValue: T) -> T
     
-    func setValueByKey(val: Any?, key: StatisticKey)
+    func setValueByKey<T>(val: T?, key: StatisticKey)
 }
 
 class StatisticDataSourceLocal : StatisticDataSourceLocalProtocol {
     private let storage: UserDefaults = .standard
     
-    func getValueByKey(_ key: StatisticKey) -> Any? {
-        return storage.object(forKey: key.rawValue)
+    func getValueByKey<T>(_ key: StatisticKey, defaultValue: T) -> T {
+        return storage.object(forKey: key.rawValue) as? T ?? defaultValue
     }
     
-    func setValueByKey(val: Any?, key: StatisticKey) {
+    func setValueByKey<T>(val: T, key: StatisticKey) {
         storage.set(val, forKey: key.rawValue)
     }
     
