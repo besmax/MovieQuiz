@@ -31,22 +31,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         super.viewDidLoad()
         
         questionFactory = QuestionFactory(delegate: self)
-    
+        
         configurePreviewImage()
         configureLabels()
         startQuiz()
     }
     
     // MARK: - QuestionFactoryDelegate
-
+    
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else { return }
         
         currentQuestion = question
         let viewModel = convert(model: question)
         DispatchQueue.main.async { [weak self] in
-               self?.show(quiz: viewModel)
-           }
+            self?.show(quiz: viewModel)
+        }
     }
     
     private func configurePreviewImage() {
@@ -79,12 +79,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func checkAnswer(answer: Bool) {
-       if  let currentQuestion = currentQuestion {
-        let isCorrect = currentQuestion.correctAnswer == answer
-        if isCorrect {
-            correctAnswers += 1
-        }
-        showAnswerResult(isCorrect: isCorrect)}
+        if  let currentQuestion = currentQuestion {
+            let isCorrect = currentQuestion.correctAnswer == answer
+            if isCorrect {
+                correctAnswers += 1
+            }
+            showAnswerResult(isCorrect: isCorrect)}
     }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -92,17 +92,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             image: UIImage(named: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)"
-      )
+        )
     }
     
     private func showNextQuestionOrResults() {
-      if currentQuestionIndex == questionsAmount - 1 {
-          statisticService.store(correct: correctAnswers, total: questionsAmount)
-          showQuizResults()
-      } else {
-        currentQuestionIndex += 1
-        questionFactory?.requestNextQuestion()
-      }
+        if currentQuestionIndex == questionsAmount - 1 {
+            statisticService.store(correct: correctAnswers, total: questionsAmount)
+            showQuizResults()
+        } else {
+            currentQuestionIndex += 1
+            questionFactory?.requestNextQuestion()
+        }
         enableButtons()
     }
     
@@ -116,9 +116,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             Средняя точность: \(accuracyFormatted)%
             """
         let viewModel = QuizResultsViewModel(
-          title: "Этот раунд окончен",
-          text: text,
-          buttonText: "Сыграть ещё раз"
+            title: "Этот раунд окончен",
+            text: text,
+            buttonText: "Сыграть ещё раз"
         )
         show(quiz: viewModel)
     }

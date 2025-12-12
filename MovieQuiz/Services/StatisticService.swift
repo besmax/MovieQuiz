@@ -44,7 +44,7 @@ final class StatisticService : StatisticServiceProtocol {
     func store(correct count: Int, total amount: Int) {
         let newTotalCorrectAnswers = dataSource.getValueByKey(StatisticKey.totalCorrectAnswers, defaultValue: 0) + count
         let newTotalQuestionsAsked = dataSource.getValueByKey(StatisticKey.totalQuestionsAsked, defaultValue: 0) + amount
-
+        
         dataSource.setValueByKey(val: newTotalCorrectAnswers, key: StatisticKey.totalCorrectAnswers)
         dataSource.setValueByKey(val: newTotalQuestionsAsked, key: StatisticKey.totalQuestionsAsked)
         

@@ -23,7 +23,11 @@ struct AlertAction {
     let style: UIAlertAction.Style
     let action: () -> Void
     
-    init(title: String, style: UIAlertAction.Style = UIAlertAction.Style.default, action: @escaping () -> Void) {
+    init(
+        title: String,
+        style: UIAlertAction.Style = UIAlertAction.Style.default,
+        action: @escaping () -> Void
+    ) {
         self.title = title
         self.style = style
         self.action = action
