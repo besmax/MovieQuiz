@@ -3,10 +3,10 @@ import UIKit
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     @IBOutlet weak private var previewImage: UIImageView!
-    
     @IBOutlet weak private var counterLabel: UILabel!
-    
     @IBOutlet weak private var questionLabel: UILabel!
+    @IBOutlet weak private var noButton: UIButton!
+    @IBOutlet weak private var yesButton: UIButton!
     
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
@@ -18,10 +18,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let statisticService: StatisticServiceProtocol = StatisticService()
     
     @IBAction private func noButtonClicked(_ sender: Any) {
+        disableButtons()
         checkAnswer(answer: false)
     }
     
     @IBAction private func yesButtonClicked(_ sender: Any) {
+        disableButtons()
         checkAnswer(answer: true)
     }
     
@@ -101,6 +103,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         currentQuestionIndex += 1
         questionFactory?.requestNextQuestion()
       }
+        enableButtons()
     }
     
     private func showQuizResults() {
@@ -134,5 +137,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter.show(alertModel) { alert in
             self.present(alert, animated: true, completion: nil)
         }
+    }
+    
+    private func disableButtons() {
+        noButton.isEnabled = false
+        yesButton.isEnabled = false
+    }
+    
+    private func enableButtons() {
+        noButton.isEnabled = true
+        yesButton.isEnabled = true
     }
 }
