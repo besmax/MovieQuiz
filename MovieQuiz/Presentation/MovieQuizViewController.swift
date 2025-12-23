@@ -3,7 +3,6 @@ import UIKit
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let activityIndicator = UIActivityIndicatorView()
 
-    
     @IBOutlet weak private var previewImage: UIImageView!
     @IBOutlet weak private var counterLabel: UILabel!
     @IBOutlet weak private var questionLabel: UILabel!
@@ -32,7 +31,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        questionFactory = QuestionFactory(delegate: self)
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         
         configurePreviewImage()
         configureLabels()
@@ -41,7 +40,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     // MARK: - QuestionFactoryDelegate
-    
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else { return }
                 
@@ -50,6 +48,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
+    }
+    
+    func didLoadDataFromServer() {
+        hideLoading()
+        previewImage.isHidden = false
+        counterLabel.isHidden = false
+        questionLabel.isHidden = false
+        
+        questionFactory?.requestNextQuestion()
+    }
+
+    func didFailToLoadData(with error: Error) {
+        showError(message: error.localizedDescription)
     }
     
     private func configurePreviewImage() {
@@ -91,7 +102,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self.showNextQuestionOrResults()
             self.previewImage.layer.borderWidth = 0
         }
-        
     }
     
     private func checkAnswer(answer: Bool) {
@@ -105,7 +115,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)"
         )
@@ -140,9 +150,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func startQuiz() {
+        showLoading()
         currentQuestionIndex = 0
         correctAnswers = 0
-        questionFactory?.requestNextQuestion()
+        questionFactory?.loadData()
     }
     
     private func show(quiz result: QuizResultsViewModel) {
@@ -167,6 +178,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showLoading() {
         activityIndicator.startAnimating()
+        previewImage.isHidden = true
+        counterLabel.isHidden = true
+        questionLabel.isHidden = true
     }
     
     private func hideLoading() {
@@ -174,6 +188,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func showError(message: String) {
+        previewImage.isHidden = true
+        counterLabel.isHidden = true
+        questionLabel.isHidden = true
         hideLoading()
         
         let onButtonClick = { [weak self] in
