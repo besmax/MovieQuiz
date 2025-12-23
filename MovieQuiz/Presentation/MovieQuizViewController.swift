@@ -161,9 +161,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             if let controller =  self { controller.startQuiz() }
         }
         
-        alertPresenter.show(alertModel) { alert in
-            self.present(alert, animated: true, completion: nil)
-        }
+        alertPresenter.show(alertModel) { [weak self] alert in
+               self?.present(alert, animated: true, completion: nil)
+           }
     }
     
     private func disableButtons() {
@@ -210,8 +210,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             actions: [alertAction]
         )
         
-        alertPresenter.show(alertModel) { alert in
-            self.present(alert, animated: true, completion: nil)
+        alertPresenter.show(alertModel) { [weak self] alert in
+            self?.present(alert, animated: true, completion: nil)
         }
     }
 }
