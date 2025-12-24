@@ -19,13 +19,7 @@ final class QuestionFactory : QuestionFactoryProtocol {
             
             guard let movie = self.movies[safe: index] else { return }
             
-            var imageData = Data()
-            
-            do {
-                imageData = try Data(contentsOf: movie.resizedImageURL)
-            } catch {
-                print("Failed to load movie image \(movie.title)")
-            }
+            let imageData = getMovieImage(for: movie)
             
             let rating = Float(movie.rating) ?? 00
             
@@ -57,6 +51,65 @@ final class QuestionFactory : QuestionFactoryProtocol {
                 case .failure(let error):
                     self.delegate?.didFailToLoadData(with: error)
                 }
+            }
+        }
+    }
+    
+    // TODO get rid of Data(contentsOf: movie.resizedImageURL) it handles incorrect url very poorly
+    private func getMovieImage(for movie: MostPopularMovie) -> Data {
+        do {
+            return try Data(contentsOf: movie.resizedImageURL)
+        } catch {
+            print("Failed to load movie image \(movie.title)")
+            return createTitlePlaceholder(for: movie)
+        }
+    }
+    
+    private func createTitlePlaceholder(for movie: MostPopularMovie) -> Data {
+        let placeholderImage = createMovieTitleImage(movieTitle: movie.title)
+        return placeholderImage.pngData() ?? Data()
+    }
+    
+    private func createMovieTitleImage(movieTitle: String) -> UIImage {
+        let size = CGSize(width: 200, height: 300)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        
+        return renderer.image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            
+            UIColor(white: 0.9, alpha: 1.0).setStroke()
+            context.stroke(CGRect(origin: .zero, size: size).insetBy(dx: 0.5, dy: 0.5))
+            
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+            paragraphStyle.lineBreakMode = .byWordWrapping
+            
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 18, weight: .bold),
+                .foregroundColor: UIColor.darkGray,
+                .paragraphStyle: paragraphStyle
+            ]
+            
+            let textRect = CGRect(
+                x: 20,
+                y: size.height / 2 - 40,
+                width: size.width - 40,
+                height: 80
+            )
+            
+            (movieTitle as NSString).draw(in: textRect, withAttributes: attributes)
+            
+            let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .light)
+            if let filmIcon = UIImage(systemName: "film", withConfiguration: config)?
+                .withTintColor(.lightGray, renderingMode: .alwaysOriginal) {
+                let iconRect = CGRect(
+                    x: (size.width - 30) / 2,
+                    y: 40,
+                    width: 30,
+                    height: 30
+                )
+                filmIcon.draw(in: iconRect)
             }
         }
     }
