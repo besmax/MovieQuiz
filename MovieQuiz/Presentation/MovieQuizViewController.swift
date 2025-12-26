@@ -1,7 +1,8 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
-    
+    private let activityIndicator = UIActivityIndicatorView()
+
     @IBOutlet weak private var previewImage: UIImageView!
     @IBOutlet weak private var counterLabel: UILabel!
     @IBOutlet weak private var questionLabel: UILabel!
@@ -30,23 +31,36 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        questionFactory = QuestionFactory(delegate: self)
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         
         configurePreviewImage()
         configureLabels()
+        configureActivityIndicator()
         startQuiz()
     }
     
     // MARK: - QuestionFactoryDelegate
-    
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else { return }
-        
+                
         currentQuestion = question
         let viewModel = convert(model: question)
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
+    }
+    
+    func didLoadDataFromServer() {
+        hideLoading()
+        previewImage.isHidden = false
+        counterLabel.isHidden = false
+        questionLabel.isHidden = false
+        
+        questionFactory?.requestNextQuestion()
+    }
+
+    func didFailToLoadData(with error: Error) {
+        showError(message: error.localizedDescription)
     }
     
     private func configurePreviewImage() {
@@ -55,6 +69,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func configureLabels() {
         questionLabel.numberOfLines = 0
+    }
+    
+    private func configureActivityIndicator() {
+        activityIndicator.style = .large
+        activityIndicator.color = .ypGreen
+        activityIndicator.hidesWhenStopped = true
+        
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(activityIndicator)
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
     }
     
     private func show(quiz step: QuizStepViewModel) {
@@ -75,7 +102,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self.showNextQuestionOrResults()
             self.previewImage.layer.borderWidth = 0
         }
-        
     }
     
     private func checkAnswer(answer: Bool) {
@@ -89,7 +115,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)"
         )
@@ -116,17 +142,18 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             Средняя точность: \(accuracyFormatted)%
             """
         let viewModel = QuizResultsViewModel(
-            title: "Этот раунд окончен",
+            title: String(localized: "round_finished"),
             text: text,
-            buttonText: "Сыграть ещё раз"
+            buttonText: String(localized: "play_again")
         )
         show(quiz: viewModel)
     }
     
     private func startQuiz() {
+        showLoading()
         currentQuestionIndex = 0
         correctAnswers = 0
-        questionFactory?.requestNextQuestion()
+        questionFactory?.loadData()
     }
     
     private func show(quiz result: QuizResultsViewModel) {
@@ -134,9 +161,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             if let controller =  self { controller.startQuiz() }
         }
         
-        alertPresenter.show(alertModel) { alert in
-            self.present(alert, animated: true, completion: nil)
-        }
+        alertPresenter.show(alertModel) { [weak self] alert in
+               self?.present(alert, animated: true, completion: nil)
+           }
     }
     
     private func disableButtons() {
@@ -147,5 +174,44 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private func enableButtons() {
         noButton.isEnabled = true
         yesButton.isEnabled = true
+    }
+    
+    private func showLoading() {
+        activityIndicator.startAnimating()
+        previewImage.isHidden = true
+        counterLabel.isHidden = true
+        questionLabel.isHidden = true
+    }
+    
+    private func hideLoading() {
+        activityIndicator.stopAnimating()
+    }
+    
+    private func showError(message: String) {
+        previewImage.isHidden = true
+        counterLabel.isHidden = true
+        questionLabel.isHidden = true
+        hideLoading()
+        
+        let onButtonClick = { [weak self] in
+            guard let self = self else { return }
+            
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            
+            self.questionFactory?.requestNextQuestion()
+        }
+        
+        let alertAction = AlertAction(title: String(localized: "try_again"), action: onButtonClick)
+        
+        let alertModel = AlertModel(
+            title: String(localized: "error_title"),
+            message: message,
+            actions: [alertAction]
+        )
+        
+        alertPresenter.show(alertModel) { [weak self] alert in
+            self?.present(alert, animated: true, completion: nil)
+        }
     }
 }
